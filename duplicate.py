@@ -40,10 +40,8 @@ def duplicate_object(obj, new_mat):
     for uv_layer_name in uv_layers_to_delete:
         uv_layers.remove(uv_layers[uv_layer_name])
 
-    # Remove all materials
-    for i in range(0, len(dup_obj.material_slots)):
-        bpy.context.object.active_material_index = i
-        bpy.ops.object.material_slot_remove({'object': dup_obj})
+    # Remove all materials   
+    dup_obj.data.materials.clear()
 
     # Remove all modifiers
     if not settings.copy_modifiers:

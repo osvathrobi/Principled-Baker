@@ -15,7 +15,7 @@ def get_all_nodes_linked_from(node):
 def is_mixnode_in_node_tree(node):
     """return True only if mix node is higher in tree"""
     
-    node_type = 'MIX_RGB'
+    node_type = 'MIX' #ROBI HACK
     if node.type == node_type:
         return True
     elif node.type == 'AMBIENT_OCCLUSION':

@@ -24,12 +24,16 @@ def prepare_bake_factor(mat, socket, new_socket, node_type, factor_name='Fac'):
                 prepare_bake_factor(
                     mat, from_socket, new_socket, node_type, factor_name)
 
+def _is_mix_node(node):
+    t = getattr(node, "type", None)
+    bid = getattr(node, "bl_idname", None)
+    return (t in {"MIX_RGB", "MIX"}) or (bid in {"ShaderNodeMixRGB", "ShaderNodeMix"})
 
 def prepare_bake_ao(mat, socket, new_socket):
 
     node = socket.node
 
-    if node.type == 'MIX_RGB':
+    if _is_mix_node(node):
         if node.inputs[1].is_linked and node.inputs[2].is_linked:
             from_node_1 = node.inputs[1].links[0].from_node
             from_node_2 = node.inputs[2].links[0].from_node
@@ -69,7 +73,7 @@ def prepare_bake_color(mat, from_socket, new_socket):
 
     # find and unlink AO trees in tagged nodes
     for node in mat.node_tree.nodes:
-        if node.type == 'MIX_RGB' and NODE_TAG in node.keys():
+        if _is_mix_node(node) and NODE_TAG in node.keys():
             for i, node_input in enumerate(node.inputs[1:]):
                 if node_input.is_linked:
                     from_node = node_input.links[0].from_node
@@ -84,6 +88,23 @@ def prepare_bake_color(mat, from_socket, new_socket):
 
     mat.node_tree.links.new(from_socket, new_socket)
 
+def set_white(socket):
+    """Safely set a socket to white, supporting RGB/RGBA/VALUE sockets."""
+    if not socket or not hasattr(socket, "default_value") or socket.is_linked:
+        return
+
+    dv = socket.default_value
+    try:
+        n = len(dv)
+    except TypeError:
+        n = 1
+
+    if n == 4:
+        socket.default_value = (1.0, 1.0, 1.0, 1.0)
+    elif n == 3:
+        socket.default_value = (1.0, 1.0, 1.0)
+    else:
+        socket.default_value = 1.0
 
 def prepare_bake(mat, socket, new_socket, input_socket_name):
     settings = bpy.context.scene.principled_baker_settings
@@ -150,7 +171,7 @@ def prepare_bake(mat, socket, new_socket, input_socket_name):
         if input_socket_name == 'Ambient Occlusion':
             # AO: remove all non-ao branches
             for tmp_node in mat.node_tree.nodes:
-                if tmp_node.type == 'MIX_RGB' and NODE_TAG in tmp_node.keys():
+                if _is_mix_node(tmp_node) and NODE_TAG in tmp_node.keys():
                     for i, node_input in enumerate(tmp_node.inputs[1:]):
                         if node_input.is_linked:
                             from_node = node_input.links[0].from_node
@@ -167,9 +188,11 @@ def prepare_bake(mat, socket, new_socket, input_socket_name):
                     col1_in = tmp_node.inputs[1]
                     col2_in = tmp_node.inputs[2]
                     if not col1_in.is_linked:
-                        col1_in.default_value = white
+                        #col1_in.default_value = white
+                        set_white(col1_in)
                     if not col2_in.is_linked:
-                        col2_in.default_value = white
+                        #col2_in.default_value = white
+                        set_white(col2_in)
 
             # AO: link ao branch
             for input_socket in node.inputs:

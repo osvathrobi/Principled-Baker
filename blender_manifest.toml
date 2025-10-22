@@ -1,0 +1,18 @@
+schema_version = "1.0.0"
+
+id = "principled_baker"
+version = "1.0.0"
+name = "Principled Baker"
+tagline = "Bake PBR materials to textures easily"
+maintainer = "Robin Shen <cagedelephant666@gmail.com>"
+type = "add-on"
+
+blender_version_min = "4.0.0"
+blender_version_max = "5.0.0"
+
+license = [
+    "SPDX:GPL-3.0-or-later"
+]
+
+# Optional but nice to include for completeness
+tags = ["Render", "Bake", "Material", "PBR"]
